@@ -7,8 +7,9 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
 class SoftmaxAutoEncoder:
 
-    def __init__(self, num_features, num_outputs, list_hidden_layer, corruption_level,
-                 learning_rate, sparsity_parameter, penalty_parameter):
+    def __init__(self, num_features, num_outputs, list_hidden_layer,learning_rate,
+                 corruption_level=0.01,
+                 sparsity_parameter=0.01, penalty_parameter=0.01):
 
         """
         :param list_hidden_layer: [10, 20] -> means 2 hidden layer, 10 neurons ->layer_1, 10 neurons -> layer_2
@@ -23,22 +24,33 @@ class SoftmaxAutoEncoder:
         d = T.matrix('d')
 
         """
+            Do the data corruption
+        """
+
+        x = self.corrupt_the_data(corruption_level=corruption_level, x=x)
+
+        """
             Construct the auto encoder
         """
 
-        weight_ae = self.init_weights(list_neurons[0], list_neurons[1], name_weight="weight_auto_encoder")
-        bias_ae = self.init_bias(list_neurons[1], name_bias="bias_ae")
-        bias_ae_pm = self.init_bias(list_neurons[0], name_bias="bias_ae_pm")
+        weight_ae = init_weights(list_neurons[0], list_neurons[1], name_weight="weight_auto_encoder")
+        bias_ae = init_bias(list_neurons[1], name_bias="bias_ae")
+        bias_ae_pm = init_bias(list_neurons[0], name_bias="bias_ae_pm")
 
         y = T.nnet.sigmoid(T.dot(x, weight_ae) + bias_ae)
         z = T.nnet.sigmoid(T.dot(y, T.transpose(weight_ae)) + bias_ae_pm)
 
-        cost = - T.mean(T.sum(x * T.log(z) + (1 - x) * T.log(1 - z), axis=1))
+        cost = - T.mean(T.sum(x * T.log(z) + (1 - x) * T.log(1 - z), axis=1)) - \
+                    penalty_parameter * (sparsity_parameter * T.log(sparsity_parameter)
+                                         + (1 - sparsity_parameter) * T.log(1 - sparsity_parameter))\
+               + penalty_parameter * sparsity_parameter * T.sum(T.log(T.mean(y, axis=0) + 1e-6))\
+               + penalty_parameter * (1 - sparsity_parameter) * T.sum(T.log(1 - T.mean(y, axis=0) + 1e-6))
+
         params = [weight_ae, bias_ae, bias_ae_pm]
 
         grads = T.grad(cost, params)
 
-        updates = [(param - learning_rate*grad*param) for param, grad in zip(params, grads)]
+        updates = [(param, param - learning_rate*grad) for param, grad in zip(params, grads)]
 
         self.train_encoder = theano.function(
             inputs=[x],
@@ -56,8 +68,8 @@ class SoftmaxAutoEncoder:
 
         for i in range(2, len(list_neurons)):
 
-            weight = self.init_weights(list_neurons[i-1], list_neurons[i], 'weights_'+str(i))
-            bias = self.init_bias(list_neurons[i], 'bias_'+str(i))
+            weight = init_weights(list_neurons[i-1], list_neurons[i], 'weights_'+str(i))
+            bias = init_bias(list_neurons[i], 'bias_'+str(i))
 
             if i < len(list_neurons)-1:
                 prev_output = T.nnet.sigmoid(T.dot(prev_output, weight) + bias)
@@ -73,13 +85,29 @@ class SoftmaxAutoEncoder:
         cost_cross = T.mean(T.nnet.categorical_crossentropy(prev_output, d))
         params_cross = list_weight+list_bias
         grads_cross = T.grad(cost_cross, params_cross)
-        updates_cross = [(param - learning_rate*grad*param) for param, grad in zip(params_cross, grads_cross)]
+        updates_cross = [(param, param - learning_rate*grad) for param, grad in zip(params_cross, grads_cross)]
 
         self.train_cross = theano.function(
             inputs=[x, d],
             updates=updates_cross,
+            outputs=[prev_output, y_pred, cost_cross]
+        )
+
+        self.test_cross = theano.function(
+            inputs=[x],
             outputs=[y_pred]
         )
+
+    def corrupt_the_data(self, corruption_level, x):
+
+        # use binomial dist at corrupt the data
+        rng = np.random.RandomState(123)
+        theano_rng = RandomStreams(rng.randint(2 ** 30))
+
+        tilde_x = theano_rng.binomial(size=x.shape, n=1, p=1 - corruption_level,
+                                      dtype=theano.config.floatX) * x
+
+        return tilde_x
 
     def start_train_auto_encoder(self, epochs, batch_size, train_x, train_y):
 
@@ -97,4 +125,25 @@ class SoftmaxAutoEncoder:
                 results.append(result)
 
             d.append(np.mean(costs, dtype='float64'))
-            print(d[epoch])
+            print "Epoch: %d Cost: %s \n" % (epoch, d[epoch])
+
+    def start_train_the_full(self, epochs, batch_size, train_x, train_y, test_x, test_y):
+
+        print "Start training the full hidden layer with autoencoder"
+
+        d = []
+        r = []
+
+        for epoch in range(epochs):
+            # go through trainng set
+            costs = []
+            results = []
+
+            for start, end in zip(range(0, len(train_x), batch_size), range(batch_size, len(train_y), batch_size)):
+                output, result, cost = self.train_cross(train_x[start:end], train_y[start:end])
+                costs.append(cost)
+                results.append(np.mean(np.argmax(train_y, axis=1) == self.test_cross(train_x)))
+
+            d.append(np.mean(costs, dtype='float64'))
+            r.append(np.mean(results, dtype='float64'))
+            print "result: %s, cost: %s \n" % (r[epoch], d[epoch])
