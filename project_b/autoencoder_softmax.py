@@ -22,6 +22,10 @@ class SoftmaxAutoEncoder:
         x = T.matrix('x')
         d = T.matrix('d')
 
+        self.total_costs_auto_encoder = []
+        self.total_costs_full = []
+        self.total_predictions_full = []
+
         """
             Do the data corruption
         """
@@ -67,7 +71,8 @@ class SoftmaxAutoEncoder:
 
             prev_output = T.nnet.sigmoid(T.dot(prev_output, weight_transpose) + bias_transpose)
 
-        cost = - T.mean(T.sum(x * T.log(prev_output) + (1 - x) * T.log(1 - prev_output), axis=1))
+        # cost = - T.mean(T.sum(x * T.log(prev_output) + (1 - x) * T.log(1 - prev_output), axis=1))
+        cost = T.mean(T.nnet.binary_crossentropy(prev_output, x))
 
         params = weights+biases+biases_trans
         grads = T.grad(cost, params)
@@ -117,10 +122,10 @@ class SoftmaxAutoEncoder:
 
         return tilde_x
 
-    def start_train_auto_encoder(self, epochs, batch_size, train_x, train_y):
+    def start_train_auto_encoder(self, epochs, batch_size, train_x, train_y, verbose=False):
 
         print "Start training the auto encoder"
-        d = []
+
         for epoch in range(epochs):
             # go through trainng set
 
@@ -132,15 +137,14 @@ class SoftmaxAutoEncoder:
                 costs.append(cost)
                 results.append(result)
 
-            d.append(np.mean(costs, dtype='float64'))
-            print "Epoch: %d Cost: %s \n" % (epoch, d[epoch])
+            self.total_costs_auto_encoder.append(np.mean(costs, dtype='float64'))
+
+            if verbose:
+                print "Epoch: %d Cost: %s \n" % (epoch, self.total_costs_auto_encoder[epoch])
 
     def start_train_the_full(self, epochs, batch_size, train_x, train_y, test_x, test_y):
 
         print "Start training the full hidden layer with autoencoder"
-
-        d = []
-        r = []
 
         for epoch in range(epochs):
             # go through trainng set
@@ -150,8 +154,16 @@ class SoftmaxAutoEncoder:
             for start, end in zip(range(0, len(train_x), batch_size), range(batch_size, len(train_y), batch_size)):
                 output, result, cost = self.train_cross(train_x[start:end], train_y[start:end])
                 costs.append(cost)
-                results.append(np.mean(np.argmax(train_y, axis=1) == self.test_cross(train_x)))
+                results.append(np.mean(np.argmax(test_y, axis=1) == self.test_cross(test_x)))
 
-            d.append(np.mean(costs, dtype='float64'))
-            r.append(np.mean(results, dtype='float64'))
-            print "result: %s, cost: %s \n" % (r[epoch], d[epoch])
+            self.total_costs_full.append(np.mean(costs, dtype='float64'))
+            self.total_predictions_full.append(np.mean(results, dtype='float64'))
+            print "result: %s, cost: %s \n" % (self.total_costs_full[epoch], self.total_predictions_full[epoch])
+
+    def get_total_costs_of_auto_encoder(self):
+
+        return self.total_costs_auto_encoder
+
+    def get_total_cost_and_prediction_full(self):
+
+        return self.total_costs_full, self.total_predictions_full

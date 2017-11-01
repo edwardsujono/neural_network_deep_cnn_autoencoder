@@ -15,8 +15,8 @@ if __name__ == "__main__":
                                  list_hidden_layer=[900], learning_rate=0.05)
 
     softmax.start_train_auto_encoder(epochs=10, batch_size=20000,
-                                     train_x=train_x, train_y=train_y)
+                                     train_x=train_x, train_y=train_y, verbose=True)
 
-    softmax.start_train_the_full(epochs=100, batch_size=20000,
-                                 train_x=train_x, train_y=train_y,
-                                 test_x=test_x, test_y=test_y)
+    # softmax.start_train_the_full(epochs=100, batch_size=20000,
+    #                              train_x=train_x, train_y=train_y,
+    #                              test_x=test_x, test_y=test_y)
