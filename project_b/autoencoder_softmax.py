@@ -36,7 +36,7 @@ class SoftmaxAutoEncoder:
             Construct the auto encoder
         """
 
-        weights = []
+        self.weights = []
         biases = []
 
         prev_output = x
@@ -50,7 +50,7 @@ class SoftmaxAutoEncoder:
             weight = init_weights(list_neurons[i-1], list_neurons[i], 'weight_%s' % i)
             bias = init_bias(list_neurons[i], 'bias_%s' % i)
 
-            weights.append(weight)
+            self.weights.append(weight)
             biases.append(bias)
 
             prev_output = T.nnet.sigmoid(T.dot(prev_output, weight) + bias)
@@ -62,26 +62,28 @@ class SoftmaxAutoEncoder:
         buffer_output = prev_output
         biases_trans = []
 
-        for i in range(len(weights)-1, -1, -1):
+        for i in range(len(self.weights)-1, -1, -1):
 
-            weight_transpose = weights[i].transpose()
+            weight_transpose = self.weights[i].transpose()
             bias_transpose = init_bias(list_neurons[i], 'bias_trans_%s' % i)
 
             biases_trans.append(bias_transpose)
 
             prev_output = T.nnet.sigmoid(T.dot(prev_output, weight_transpose) + bias_transpose)
 
-        # cost = - T.mean(T.sum(x * T.log(prev_output) + (1 - x) * T.log(1 - prev_output), axis=1))
-        cost = T.mean(T.nnet.binary_crossentropy(prev_output, x))
+        # last_output = T.switch(T.gt(prev_output, 0.5), 1, 0)
+        cost = - T.mean(T.sum(x * T.log(prev_output) + (1 - x) * T.log(1 - prev_output), axis=1))
+        # cost = T.mean(T.nnet.binary_crossentropy(prev_output, x))
 
-        params = weights+biases+biases_trans
+        params = self.weights+biases+biases_trans
         grads = T.grad(cost, params)
         updates = [(param, param - learning_rate*grad) for param, grad in zip(params, grads)]
+        outputs = [cost]
 
         self.train_encoder = theano.function(
             inputs=[x],
             updates=updates,
-            outputs=[prev_output, cost]
+            outputs=outputs
         )
 
         """
@@ -96,7 +98,7 @@ class SoftmaxAutoEncoder:
 
         cost_cross = T.mean(T.nnet.categorical_crossentropy(buffer_output, d))
 
-        params_full = weights + [last_weight] + biases + [last_bias]
+        params_full = self.weights + [last_weight] + biases + [last_bias]
         grads_full = T.grad(cost_cross, params_full)
         updates_full = [(param, param - learning_rate * grad) for param, grad in zip(params_full, grads_full)]
 
@@ -127,15 +129,13 @@ class SoftmaxAutoEncoder:
         print "Start training the auto encoder"
 
         for epoch in range(epochs):
-            # go through trainng set
+            # go through trainig set
 
             costs = []
-            results = []
 
             for start, end in zip(range(0, len(train_x), batch_size), range(batch_size, len(train_y), batch_size)):
-                result, cost = self.train_encoder(train_x[start:end])
+                cost = self.train_encoder(train_x[start:end])
                 costs.append(cost)
-                results.append(result)
 
             self.total_costs_auto_encoder.append(np.mean(costs, dtype='float64'))
 
@@ -158,7 +158,7 @@ class SoftmaxAutoEncoder:
 
             self.total_costs_full.append(np.mean(costs, dtype='float64'))
             self.total_predictions_full.append(np.mean(results, dtype='float64'))
-            print "result: %s, cost: %s \n" % (self.total_costs_full[epoch], self.total_predictions_full[epoch])
+            print "cost: %s, prediction: %s \n" % (self.total_costs_full[epoch], self.total_predictions_full[epoch])
 
     def get_total_costs_of_auto_encoder(self):
 
@@ -167,3 +167,7 @@ class SoftmaxAutoEncoder:
     def get_total_cost_and_prediction_full(self):
 
         return self.total_costs_full, self.total_predictions_full
+
+    def get_output_on_each_layer(self):
+
+        return [weight.get_value() for weight in self.weights]
