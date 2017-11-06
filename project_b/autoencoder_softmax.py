@@ -26,7 +26,9 @@ class SoftmaxAutoEncoder:
         self.total_costs_auto_encoder = []
         self.total_costs_full = []
         self.total_predictions_full = []
+        self.list_prev_output = []
         self.reconstructed_image = None
+        self.hidden_layer_value = []
 
         """
             Do the data corruption
@@ -56,6 +58,7 @@ class SoftmaxAutoEncoder:
             biases.append(bias)
 
             prev_output = T.nnet.sigmoid(T.dot(prev_output, weight) + bias)
+            self.list_prev_output.append(prev_output)
 
         """
             DECODER
@@ -91,6 +94,7 @@ class SoftmaxAutoEncoder:
             updates = sgd_momentum(cost, params, momentum=momentum)
 
         outputs = [cost, prev_output]
+        outputs.extend([p_output for p_output in self.list_prev_output])
 
         self.train_encoder = theano.function(
             inputs=[x],
@@ -147,7 +151,15 @@ class SoftmaxAutoEncoder:
             costs = []
 
             for start, end in zip(range(0, len(train_x), batch_size), range(batch_size, len(train_y), batch_size)):
-                cost, self.reconstructed_image = self.train_encoder(train_x[start:end])
+
+                self.hidden_layer_value = []
+
+                all_value = self.train_encoder(train_x[start:end])
+                cost, self.reconstructed_image = all_value[:2]
+
+                for val in all_value[2:]:
+                    self.hidden_layer_value.append(val)
+
                 costs.append(cost)
 
             self.total_costs_auto_encoder.append(np.mean(costs, dtype='float64'))
@@ -189,3 +201,6 @@ class SoftmaxAutoEncoder:
 
     def get_reconstructed_image(self):
         return self.reconstructed_image
+
+    def get_hidden_layer_activation(self):
+        return self.hidden_layer_value
