@@ -6,6 +6,7 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
 
 class SoftmaxAutoEncoder:
+
     def __init__(self, num_features, num_outputs, list_hidden_layer, learning_rate,
                  corruption_level=0.01,
                  sparsity_parameter=0.01, penalty_parameter=0.01, momentum=0.1,
@@ -29,6 +30,7 @@ class SoftmaxAutoEncoder:
         self.list_prev_output = []
         self.reconstructed_image = None
         self.hidden_layer_value = []
+        self.train_encoder_function = []
 
         """
             Do the data corruption
@@ -42,65 +44,80 @@ class SoftmaxAutoEncoder:
 
         self.weights = []
         biases = []
-
-        prev_output = x
-
-        """
-            ENCODER
-        """
-
-        for i in range(1, len(list_neurons)):
-
-            weight = init_weights(list_neurons[i-1], list_neurons[i], 'weight_%s' % i)
-            bias = init_bias(list_neurons[i], 'bias_%s' % i)
-
-            self.weights.append(weight)
-            biases.append(bias)
-
-            prev_output = T.nnet.sigmoid(T.dot(prev_output, weight) + bias)
-            self.list_prev_output.append(prev_output)
-
-        """
-            DECODER
-        """
-
-        buffer_output = prev_output
         biases_trans = []
-        list_back_neurons = []
 
-        for i in range(len(self.weights)-1, -1, -1):
+        for ind_neurons in range(2, len(list_neurons)+1):
 
-            weight_transpose = self.weights[i].transpose()
-            bias_transpose = init_bias(list_neurons[i], 'bias_trans_%s' % i)
+            """
+                ENCODER
+            """
+            list_trained_neurons = list_neurons[:ind_neurons]
+            prev_output = x
+            self.list_prev_output = []
 
-            biases_trans.append(bias_transpose)
+            for i in range(1, len(list_trained_neurons)):
 
-            prev_output = T.nnet.sigmoid(T.dot(prev_output, weight_transpose) + bias_transpose)
-            list_back_neurons.append(prev_output)
+                if i == ind_neurons-1:
+                    weight = init_weights(list_trained_neurons[i-1], list_trained_neurons[i], 'weight_%s' % i)
+                    bias = init_bias(list_trained_neurons[i], 'bias_%s' % i)
 
-        # last_output = T.switch(T.gt(prev_output, 0.5), 1, 0)
-        cost = - T.mean(T.sum(x * T.log(prev_output) + (1 - x) * T.log(1 - prev_output), axis=1))
-        if use_sparsity:
-            cost += init_sparsity_constraint(list_back_neurons=list_back_neurons, sparsity_parameter=sparsity_parameter,
-                                             penalty_parameter=penalty_parameter)
+                    self.weights.append(weight)
+                    biases.append(bias)
+                else:
+                    # use the previous value, we solely trained the added layer
+                    weight = self.weights[i-1]
+                    bias = biases[i-1]
 
-        # cost = T.mean(T.nnet.binary_crossentropy(prev_output, x))
+                prev_output = T.nnet.sigmoid(T.dot(prev_output, weight) + bias)
+                self.list_prev_output.append(prev_output)
 
-        params = self.weights+biases+biases_trans
-        if not use_momentum:
-            grads = T.grad(cost, params)
-            updates = [(param, param - learning_rate*grad) for param, grad in zip(params, grads)]
-        else:
-            updates = sgd_momentum(cost, params, momentum=momentum)
+            """
+                DECODER
+            """
 
-        outputs = [cost, prev_output]
-        outputs.extend([p_output for p_output in self.list_prev_output])
+            buffer_output = prev_output
+            list_back_neurons = []
 
-        self.train_encoder = theano.function(
-            inputs=[x],
-            updates=updates,
-            outputs=outputs
-        )
+            for i in range(len(self.weights)-1, -1, -1):
+
+                if i == ind_neurons-2:
+                    bias_transpose = init_bias(list_trained_neurons[i], 'bias_trans_%s' % i)
+                    biases_trans.append(bias_transpose)
+                else:
+                    # use the previous bias transpose
+                    bias_transpose = biases_trans[i]
+
+                weight_transpose = self.weights[i].transpose()
+
+                prev_output = T.nnet.sigmoid(T.dot(prev_output, weight_transpose) + bias_transpose)
+                list_back_neurons.append(prev_output)
+
+            # last_output = T.switch(T.gt(prev_output, 0.5), 1, 0)
+            cost = - T.mean(T.sum(x * T.log(prev_output) + (1 - x) * T.log(1 - prev_output), axis=1))
+            if use_sparsity:
+                cost += init_sparsity_constraint(list_back_neurons=list_back_neurons,
+                                                 sparsity_parameter=sparsity_parameter,
+                                                 penalty_parameter=penalty_parameter)
+
+            # cost = T.mean(T.nnet.binary_crossentropy(prev_output, x))
+
+            params = [self.weights[ind_neurons-2]] + [biases[ind_neurons-2]] + [biases_trans[ind_neurons-2]]
+
+            if not use_momentum:
+                grads = T.grad(cost, params)
+                updates = [(param, param - learning_rate*grad) for param, grad in zip(params, grads)]
+            else:
+                updates = sgd_momentum(cost, params, momentum=momentum)
+
+            outputs = [cost, prev_output]
+            outputs.extend([p_output for p_output in self.list_prev_output])
+
+            train_encoder = theano.function(
+                inputs=[x],
+                updates=updates,
+                outputs=outputs
+            )
+            self.train_encoder_function.append(train_encoder)
 
         """
             TRAIN THE FULL CONNECTED LAYER
@@ -145,27 +162,39 @@ class SoftmaxAutoEncoder:
         print "Start training the auto encoder"
         self.total_costs_auto_encoder = []
 
-        for epoch in range(epochs):
-            # go through trainig set
+        cnt_layer = 1
 
-            costs = []
+        for train_encoder in self.train_encoder_function:
 
-            for start, end in zip(range(0, len(train_x), batch_size), range(batch_size, len(train_y), batch_size)):
+            print "Start training layer %s " % cnt_layer
+            current_costs_auto_encoder = []
 
-                self.hidden_layer_value = []
+            for epoch in range(epochs):
+                # go through training set
 
-                all_value = self.train_encoder(train_x[start:end])
-                cost, self.reconstructed_image = all_value[:2]
+                costs = []
 
-                for val in all_value[2:]:
-                    self.hidden_layer_value.append(val)
+                for start, end in zip(range(0, len(train_x), batch_size), range(batch_size, len(train_y), batch_size)):
 
-                costs.append(cost)
+                    self.hidden_layer_value = []
 
-            self.total_costs_auto_encoder.append(np.mean(costs, dtype='float64'))
+                    all_value = train_encoder(train_x[start:end])
+                    cost, self.reconstructed_image = all_value[:2]
 
-            if verbose:
-                print "Epoch: %d Cost: %s \n" % (epoch, self.total_costs_auto_encoder[epoch])
+                    for val in all_value[2:]:
+                        self.hidden_layer_value.append(val)
+
+                    costs.append(cost)
+
+                current_costs_auto_encoder.append(np.mean(costs, dtype='float64'))
+
+                if verbose:
+                    print "Epoch: %d Cost: %s \n" % (epoch, current_costs_auto_encoder[epoch])
+
+            self.total_costs_auto_encoder.append(current_costs_auto_encoder)
+
+            print "Finish training layer %s " % cnt_layer
+            cnt_layer += 1
 
     def start_train_the_full(self, epochs, batch_size, train_x, train_y, test_x, test_y):
 
