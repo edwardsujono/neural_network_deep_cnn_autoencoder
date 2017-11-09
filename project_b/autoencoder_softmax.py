@@ -36,7 +36,7 @@ class SoftmaxAutoEncoder:
             Do the data corruption
         """
 
-        x = self.corrupt_the_data(corruption_level=corruption_level, x=x)
+        tilde_x = x
 
         """
             Construct the auto encoder
@@ -46,13 +46,16 @@ class SoftmaxAutoEncoder:
         biases = []
         biases_trans = []
 
+        check_input_train = None
+        check_output_train = None
+
         for ind_neurons in range(2, len(list_neurons)+1):
 
             """
                 ENCODER
             """
             list_trained_neurons = list_neurons[:ind_neurons]
-            prev_output = x
+            prev_output = tilde_x
             self.list_prev_output = []
 
             for i in range(1, len(list_trained_neurons)):
@@ -63,6 +66,10 @@ class SoftmaxAutoEncoder:
 
                     self.weights.append(weight)
                     biases.append(bias)
+                    check_input_train = prev_output
+                    if i == 1:
+                        check_input_train = x
+
                 else:
                     # use the previous value, we solely trained the added layer
                     weight = self.weights[i-1]
@@ -89,17 +96,24 @@ class SoftmaxAutoEncoder:
 
                 weight_transpose = self.weights[i].transpose()
 
+                # if i == 0:
+                #     prev_output = T.nnet.relu(T.dot(prev_output, weight_transpose) + bias_transpose)
+                # else:
                 prev_output = T.nnet.sigmoid(T.dot(prev_output, weight_transpose) + bias_transpose)
-                list_back_neurons.append(prev_output)
+
+                if i == ind_neurons-2:
+                    list_back_neurons.append(prev_output)
+                    check_output_train = prev_output
 
             # last_output = T.switch(T.gt(prev_output, 0.5), 1, 0)
-            cost = - T.mean(T.sum(x * T.log(prev_output) + (1 - x) * T.log(1 - prev_output), axis=1))
+            cost = - T.mean(T.sum(check_input_train * T.log(check_output_train) +
+                                  (1 - check_input_train) * T.log(1 - check_output_train), axis=1))
+            # cost = T.mean(T.nnet.binary_crossentropy(check_output_train, check_input_train))
+
             if use_sparsity:
                 cost += init_sparsity_constraint(list_back_neurons=list_back_neurons,
                                                  sparsity_parameter=sparsity_parameter,
                                                  penalty_parameter=penalty_parameter)
-
-            # cost = T.mean(T.nnet.binary_crossentropy(prev_output, x))
 
             params = [self.weights[ind_neurons-2]] + [biases[ind_neurons-2]] + [biases_trans[ind_neurons-2]]
 
@@ -115,7 +129,8 @@ class SoftmaxAutoEncoder:
             train_encoder = theano.function(
                 inputs=[x],
                 updates=updates,
-                outputs=outputs
+                outputs=outputs,
+                allow_input_downcast=True
             )
             self.train_encoder_function.append(train_encoder)
 
