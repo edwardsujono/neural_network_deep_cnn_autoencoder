@@ -13,7 +13,7 @@ def main():
 
     np.random.seed(10)
     batch_size = 128
-    epoch = 8
+    epoch = 3
 
     data_collector = DataCollector("../data/mnist.pkl")
     graph_visualizer = DataVisualization()
@@ -56,8 +56,6 @@ def main():
         title="Training Cost",
         figure_name="Figure1.2-CostEpoch.png"
     )
-    print(cnn.conv_layers[0].get_value())
-    return
 
     """
     Question 2: SGD with momentum
