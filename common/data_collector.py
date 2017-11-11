@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 import numpy as np
 
 
@@ -7,7 +7,7 @@ class DataCollector:
     def __init__(self, file_path):
 
         with open(file_path, "rb") as input_file:
-            self.data = cPickle.load(input_file)
+            self.data = pickle.load(input_file, encoding="latin-1")
 
         self.data_train = self.data[0]
         self.data_test = self.data[2]
