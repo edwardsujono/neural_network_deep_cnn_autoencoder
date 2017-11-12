@@ -1,6 +1,8 @@
+""" Convolutional Neural Network with Softmax output function """
+
 import theano
 import theano.tensor as T
-from common.utils import init_weight_biases_4dimension, init_weight_biases_2dimensions, shuffle_data
+from project_a.utils import init_weight_biases_4dimension, init_weight_biases_2dimensions, shuffle_data
 from theano.tensor.signal import pool
 import numpy as np
 
@@ -15,7 +17,7 @@ class SoftmaxCNN:
         
         self.train = None
         self.predict = None
-        self.Test = None
+        self.test = None
         
         self.learning = None
         self.learning_rate = None
@@ -99,7 +101,7 @@ class SoftmaxCNN:
 
             weight, bias = init_weight_biases_2dimensions(hidden_layer[i], x.dtype)
 
-            prev_output = T.nnet.sigmoid(T.dot(prev_output, weight) + bias)
+            prev_output = T.nnet.relu(T.dot(prev_output, weight) + bias)
 
             weights.append(weight)
             biases.append(bias)
@@ -140,11 +142,12 @@ class SoftmaxCNN:
         grads = T.grad(cost=cost, wrt=params)
         updates = []
         for p, g in zip(params, grads):
-            v = theano.shared(p.get_value())
+            v = theano.shared(p.get_value()*0.)
             v_new = self.momentum*v - (g + self.decay*p) * self.learning_rate
             updates.append([p, p + v_new])
             updates.append([v, v_new])
-            return updates
+        
+        return updates
 
 
     def RMSprop(self, cost, params):
@@ -162,7 +165,7 @@ class SoftmaxCNN:
 
 
     def start_train(self, tr_x, tr_y, te_x, te_y, epochs, batch_size):
-
+        """ Start training based on initialized model """
         self.predictions = []
         self.costs = []
 
