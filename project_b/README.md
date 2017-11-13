@@ -24,16 +24,16 @@ Design a stacked denoising autoencoder consisting of three hidden-layers; 900 ne
 first hidden-layer, 625 neurons in the second hidden-layer, and 400 neurons in the third
 hidden-layer. To train the network:
 
-▪ Use the training dataset of MNIST digits
-▪ Corrupt the input data using a binomial distribution at 10% corruption level.
-▪ Use cross-entropy as the cost function
+- Use the training dataset of MNIST digits
+- Corrupt the input data using a binomial distribution at 10% corruption level.
+- Use cross-entropy as the cost function
 
 Plot
 - learning curves (i.e., reconstruction errors on training data) for training each layer
 - Plot 100 samples of weights (as images) learned at each layer
 - For 100 representative test images plot
-o reconstructed images by the network.
-o Hidden layer activation
+  - reconstructed images by the network.
+  - Hidden layer activation
 ### Question 2
 
 Train a five-layer feedforward neural network to recognize MNIST data, initialized by the three
