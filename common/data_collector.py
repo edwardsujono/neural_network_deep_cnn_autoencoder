@@ -4,10 +4,13 @@ import numpy as np
 
 class DataCollector:
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, use_encoding=False):
 
         with open(file_path, "rb") as input_file:
-            self.data = pickle.load(input_file, encoding="latin-1")
+            if use_encoding:
+                self.data = pickle.load(input_file, encoding="latin-1")
+            else:
+                self.data = pickle.load(input_file)
 
         self.data_train = self.data[0]
         self.data_test = self.data[2]

@@ -9,8 +9,13 @@ import math
 
 if __name__ == "__main__":
     """
+        =============================
         QUESTION 1
+        =============================
     """
+    print "===========================\n"
+    print "Start Question 1 !\n"
+    print "===========================\n"
 
     # This part of assignment aims to provide you with some exposure to the use of autoencoders. Use
     # the full MNIST dataset for this problem.
@@ -34,7 +39,7 @@ if __name__ == "__main__":
 
     # a. Learning curve for training each layer.
 
-    data_collector = DataCollector("mnist.pkl")
+    data_collector = DataCollector("../mnist.pkl")
 
     train_x, train_y = data_collector.get_train_data()
     test_x, test_y = data_collector.get_test_data()
@@ -42,7 +47,7 @@ if __name__ == "__main__":
 
     num_feature = len(train_x[0])
     list_hidden_layer = [900, 625, 400]
-    epochs = 50
+    epochs = 3
     batch_size = 128
     num_output = 10
 
@@ -64,7 +69,7 @@ if __name__ == "__main__":
                              x_label='epochs',
                              y_label='Binary Cross Entropy cost',
                              title='Binary Cross Entropy layer %s' % cntr,
-                             figure_name='project_b/images/1a_cost_%s.png' % cntr)
+                             figure_name='../data/test_project_b/1a_cost_%s.png' % cntr)
         cntr += 1
 
     list_weights = softmax.get_weights_on_each_layer()
@@ -75,7 +80,7 @@ if __name__ == "__main__":
     number_layer = 0
     number_column = 10
     visualizer.show_plot \
-            (data=list_weights[number_layer], figure_name="project_b/images/1b_auto_first.png", number_column=number_column,
+            (data=list_weights[number_layer], figure_name="../data/test_project_b/1b_auto_first.png", number_column=number_column,
              limit_image=100, size=28, transpose=True)
 
     # b. Plot 100 samples of weights (as images) learned at each layer
@@ -91,7 +96,7 @@ if __name__ == "__main__":
     number_column = 10
     visualizer.show_plot(
         data=list_weights[number_layer],
-        figure_name="project_b/images/1b_auto_first.png",
+        figure_name="../data/test_project_b/1b_auto_first.png",
         number_column=number_column,
         limit_image=100,
         size=28,
@@ -102,7 +107,7 @@ if __name__ == "__main__":
 
     num_feature = len(train_x[0])
     list_hidden_layer = [900, 625, 400]
-    epochs = 50
+    epochs = 3
     batch_size = 128
     num_output = 10
 
@@ -118,7 +123,7 @@ if __name__ == "__main__":
     number_column = 10
     visualizer.show_plot(
         data=list_weights_xavier[number_layer],
-        figure_name="project_b/images/1b_auto_first_xavier_range.png",
+        figure_name="../data/test_project_b/1b_auto_first_xavier_range.png",
         number_column=number_column,
         limit_image=100,
         size=28,
@@ -132,7 +137,7 @@ if __name__ == "__main__":
     visualizer = DataVisualizationAdjacent()
     visualizer.show_plot(
         data=reconstructed_images_xavier_diff,
-        figure_name="./project_b/images/1c_xavier_range_reconstructed_image.png",
+        figure_name="../data/test_project_b/1c_xavier_range_reconstructed_image.png",
         number_column=number_column,
         limit_image=100,
         size=28,
@@ -145,7 +150,7 @@ if __name__ == "__main__":
     number_column = 10
     visualizer.show_plot(
         data=list_weights[number_layer],
-        figure_name="project_b/images/1b_auto_second.png",
+        figure_name="../data/test_project_b/1b_auto_second.png",
         number_column=number_column,
         limit_image=100,
         size=int(math.sqrt(list_hidden_layer[number_layer - 1])),
@@ -158,7 +163,7 @@ if __name__ == "__main__":
     number_column = 10
     visualizer.show_plot(
         data=list_weights[number_layer],
-        figure_name="project_b/images/1b_auto_third.png",
+        figure_name="../data/test_project_b/1b_auto_third.png",
         number_column=number_column,
         limit_image=100,
         size=int(math.sqrt(list_hidden_layer[number_layer - 1])),
@@ -176,7 +181,7 @@ if __name__ == "__main__":
     reconstructed_images = softmax.get_reconstructed_image()
     visualizer.show_plot(
         data=reconstructed_images,
-        figure_name="./project_b/images/1c_reconstructed_image.png",
+        figure_name="../data/test_project_b/1c_reconstructed_image.png",
         number_column=number_column,
         limit_image=100,
         size=28,
@@ -187,7 +192,7 @@ if __name__ == "__main__":
 
     num_feature = len(train_x[0])
     list_hidden_layer = [900, 625, 400]
-    epochs = 50
+    epochs = 3
     batch_size = 128
     num_output = 10
 
@@ -203,7 +208,7 @@ if __name__ == "__main__":
     reconstructed_images_not_shared_weight = softmax_not_share_weight.get_reconstructed_image()
     visualizer.show_plot(
         data=reconstructed_images_not_shared_weight,
-        figure_name="./project_b/images/1c_reconstructed_image_not_shared_weight.png",
+        figure_name="../data/test_project_b/1c_reconstructed_image_not_shared_weight.png",
         number_column=number_column,
         limit_image=100,
         size=28,
@@ -216,7 +221,7 @@ if __name__ == "__main__":
     for val_hidden_layer in hidden_layer_activation:
         visualizer.show_plot(
             data=val_hidden_layer,
-            figure_name="./project_b/images/1c_hidden_layer_%s.png" % hidden_layer_cnt,
+            figure_name="../data/test_project_b/1c_hidden_layer_%s.png" % hidden_layer_cnt,
             number_column=number_column,
             limit_image=100,
             size=int(math.sqrt(len(val_hidden_layer[0]))),
@@ -225,13 +230,19 @@ if __name__ == "__main__":
         hidden_layer_cnt += 1
 
     """
+        ================================
         QUESTION 2
+        ================================
     """
+    print "===========================\n"
+    print "Start Question 2 !\n"
+    print "===========================\n"
+
     # ## 2.Train a five-layer feedforward neural network to recognize MNIST data,
     #  initialized by the three hidden layers learned in part (1) and by adding a softmax
     #  layer as the output layer. Plot the training errors and test accuracies during training.
 
-    epochs = 25
+    epochs = 3
     batch_size = 128
 
     softmax.start_train_the_full(epochs=epochs, batch_size=batch_size,
@@ -247,22 +258,28 @@ if __name__ == "__main__":
                          x_label='epochs',
                          y_label='Categorical Cross Entropy',
                          title='Categorical Cross Entropy',
-                         figure_name='../data/project_b/2_cost.png')
+                         figure_name='../data/test_project_b/2_cost.png')
 
     visualizer.show_plot(list_x_point=range(epochs),
                          list_y_point=list_prediction,
                          x_label='epochs',
                          y_label='accuracy',
                          title='predictions',
-                         figure_name='../data/project_b/2_prediction.png')
+                         figure_name='../data/test_project_b/2_prediction.png')
 
     """
+        =================================
         QUESTION 3
+        ==================================
     """
+
+    print "===========================\n"
+    print "Start Question 3 !\n"
+    print "===========================\n"
 
     num_feature = len(train_x[0])
     list_hidden_layer = [900, 625, 400]
-    epochs = 50
+    epochs = 3
     batch_size = 128
     num_output = 10
     momentum = 0.1
@@ -294,7 +311,7 @@ if __name__ == "__main__":
                              x_label='epochs',
                              y_label='Binary Cross Entropy cost',
                              title='Binary Cross Entropy of Layer %s ' % cntr,
-                             figure_name='project_b/images/3a_cost_layer_%s.png' % cntr,
+                             figure_name='../data/test_project_b/3a_cost_layer_%s.png' % cntr,
                              labels=['cost with momentum and sparsity', 'cost']
                              )
         cntr += 1
@@ -310,7 +327,7 @@ if __name__ == "__main__":
     number_layer = 0
     visualizer.show_plot(
         data=list_weights_sparsity_momentum[number_layer],
-        figure_name="project_b/images/3b_auto_first.png",
+        figure_name="../data/test_project_b/3b_auto_first.png",
         number_column=number_column,
         limit_image=100,
         size=28,
@@ -322,7 +339,7 @@ if __name__ == "__main__":
     number_layer = 1
     visualizer.show_plot(
         data=list_weights_sparsity_momentum[number_layer],
-        figure_name="project_b/images/3b_auto_second.png",
+        figure_name="../data/test_project_b/3b_auto_second.png",
         number_column=number_column,
         limit_image=100,
         size=int(math.sqrt(list_hidden_layer[number_layer - 1])),
@@ -334,7 +351,7 @@ if __name__ == "__main__":
     number_layer = 2
     visualizer.show_plot(
         data=list_weights_sparsity_momentum[number_layer],
-        figure_name="project_b/images/3b_auto_third.png",
+        figure_name="../data/test_project_b/3b_auto_third.png",
         number_column=number_column,
         limit_image=100,
         size=int(math.sqrt(list_hidden_layer[number_layer - 1])),
@@ -349,7 +366,7 @@ if __name__ == "__main__":
     reconstructed_images = softmax_momentum_sparsity.get_reconstructed_image()
     visualizer.show_plot(
         data=reconstructed_images,
-        figure_name="./project_b/images/3c_reconstructed_image.png",
+        figure_name="../data/test_project_b/3c_reconstructed_image.png",
         number_column=number_column,
         limit_image=100,
         size=28,
@@ -363,7 +380,7 @@ if __name__ == "__main__":
     for val_hidden_layer in hidden_layer_activation_softmax:
         visualizer.show_plot(
             data=val_hidden_layer,
-            figure_name="./project_b/images/3c_hidden_layer-activation_%s.png" % hidden_layer_cnt,
+            figure_name="../data/test_project_b/3c_hidden_layer-activation_%s.png" % hidden_layer_cnt,
             number_column=number_column,
             limit_image=100,
             size=int(math.sqrt(len(val_hidden_layer[0]))),
@@ -373,7 +390,7 @@ if __name__ == "__main__":
 
     # #### compare result from 2
 
-    epochs = 25
+    epochs = 3
 
     batch_size = 128
 
@@ -391,7 +408,7 @@ if __name__ == "__main__":
                          x_label='epochs',
                          y_label='Categorical Cross Entropy',
                          title='Cost result',
-                         figure_name='project_b/images/3_cost.png',
+                         figure_name='../data/test_project_b/3_cost.png',
                          labels=['normal', 'with sparsity parameter and momentum']
                          )
 
@@ -400,7 +417,7 @@ if __name__ == "__main__":
                          x_label='epochs',
                          y_label='accuracy',
                          title='predictions result',
-                         figure_name='project_b/images/3_prediction.png',
+                         figure_name='../data/test_project_b/3_prediction.png',
                          labels=['normal', 'with sparsity parameter and momentum']
                          )
 

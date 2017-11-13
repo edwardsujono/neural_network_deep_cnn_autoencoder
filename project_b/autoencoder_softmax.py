@@ -1,5 +1,5 @@
 import numpy as np
-from common.utils import init_bias, init_weights, init_sparsity_constraint, sgd_momentum
+from common.utils import init_bias, init_weights, shuffle_data, init_sparsity_constraint, sgd_momentum
 import theano
 import theano.tensor as T
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
