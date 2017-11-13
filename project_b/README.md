@@ -32,8 +32,8 @@ Plot
 - learning curves (i.e., reconstruction errors on training data) for training each layer
 - Plot 100 samples of weights (as images) learned at each layer
 - For 100 representative test images plot
--- reconstructed images by the network.
--- Hidden layer activation
+  - reconstructed images by the network.
+  - Hidden layer activation
 ### Question 2
 
 Train a five-layer feedforward neural network to recognize MNIST data, initialized by the three
