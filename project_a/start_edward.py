@@ -1,9 +1,11 @@
 from cnn_softmax_edward import CNN
+import numpy as np
 from common.data_collector import DataCollector
 
 if __name__ == "__main__":
 
     data_collector = DataCollector("../mnist.pkl")
+    np.random.seed(10)
 
     train_x, train_y = data_collector.get_train_data()
     test_x, test_y = data_collector.get_test_data()

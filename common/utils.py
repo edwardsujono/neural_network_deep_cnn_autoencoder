@@ -3,11 +3,11 @@ import theano
 import theano.tensor as T
 
 
-def init_weights(n_in, n_out, name_weight):
+def init_weights(n_in, n_out, name_weight, xavier_range=4):
     weight = np.asarray(
         np.random.uniform(
-            low=-4 * np.sqrt(6. / (n_in + n_out)),
-            high=4 * np.sqrt(6. / (n_in + n_out)),
+            low=-xavier_range * np.sqrt(6. / (n_in + n_out)),
+            high=xavier_range * np.sqrt(6. / (n_in + n_out)),
             size=(n_in, n_out)),
         dtype=theano.config.floatX)
     return theano.shared(value=weight, name=name_weight, borrow=True)
@@ -17,18 +17,18 @@ def init_bias(n, name_bias):
     return theano.shared(value=np.zeros(n, dtype=theano.config.floatX), name=name_bias, borrow=True)
 
 
-def init_sparsity_constraint(list_back_neurons, penalty_parameter, sparsity_parameter):
+def init_sparsity_constraint(list_neurons, penalty_parameter, sparsity_parameter):
 
 
     computation = 0
 
-    for back_neuron in list_back_neurons:
+    for neuron in list_neurons:
 
-        computation += penalty_parameter * T.shape(back_neuron)[1] * (sparsity_parameter *
+        computation += penalty_parameter * T.shape(neuron)[1] * (sparsity_parameter *
         T.log(sparsity_parameter) +
         (1 - sparsity_parameter) * T.log(1 - sparsity_parameter)) \
-        - penalty_parameter * sparsity_parameter * T.sum(T.log(T.mean(back_neuron, axis=0) + 1e-6)) \
-        - penalty_parameter * (1 - sparsity_parameter) * T.sum(T.log(1 - T.mean(back_neuron, axis=0) + 1e-6))
+        - penalty_parameter * sparsity_parameter * T.sum(T.log(T.mean(neuron, axis=0) + 1e-6)) \
+        - penalty_parameter * (1 - sparsity_parameter) * T.sum(T.log(1 - T.mean(neuron, axis=0) + 1e-6))
 
     return computation
 
@@ -72,4 +72,12 @@ def sgd_momentum(cost, params, lr=0.05, decay=0.0001, momentum=0.5):
         v_new = momentum*v - (g + decay*p) * lr
         updates.append([p, p + v_new])
         updates.append([v, v_new])
-        return updates
+    return updates
+
+
+def normalize_image(image):
+
+    min_val = np.min(image)
+    max_val = np.max(image)
+
+    return (image-min_val)/(max_val-min_val)

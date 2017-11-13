@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy as np
-import math
+from common.utils import normalize_image
 
 
 class DataVisualization:
@@ -43,10 +42,9 @@ class DataVisualizationAdjacent:
     def __init__(self):
         return
 
-    def show_plot(self, list_data, data, figure_name, number_column=25, limit_image=20, size=28):
+    def show_plot(self, data, figure_name, number_column=10, limit_image=20, size=28, transpose=True):
 
         width = height = size
-        data = np.array(data).reshape(list_data, width, height)
 
         plt.figure()
         plt.gray()
@@ -55,8 +53,13 @@ class DataVisualizationAdjacent:
         for i in range(1, limit_image+1):
             plt.subplot(row, number_column, i)
             plt.axis('off')
-            plt.imshow(data[i-1, :, :])
+            if transpose:
+                norm_image = normalize_image(data[:, i-1].reshape(width, height))
+            else:
+                norm_image = normalize_image(data[i-1].reshape(width, height))
+            plt.imshow(norm_image)
 
         plt.savefig(figure_name)
         print 'Finish Plotting'
         plt.show()
+

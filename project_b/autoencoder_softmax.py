@@ -6,11 +6,10 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
 
 class SoftmaxAutoEncoder:
-
     def __init__(self, num_features, num_outputs, list_hidden_layer, learning_rate,
                  corruption_level=0.01,
                  sparsity_parameter=0.01, penalty_parameter=0.01, momentum=0.1,
-                 use_sparsity=False, use_momentum=False):
+                 use_sparsity=False, use_momentum=False, xavier_range=4, shared_weight=True):
 
         """
         :param list_hidden_layer: [10, 20] -> means 2 hidden layer, 10 neurons ->layer_1, 10 neurons -> layer_2
@@ -36,20 +35,21 @@ class SoftmaxAutoEncoder:
             Do the data corruption
         """
 
-        tilde_x = x
+        tilde_x = self.corrupt_the_data(corruption_level, x)
 
         """
             Construct the auto encoder
         """
 
         self.weights = []
+        self.weights_transpose = []
         biases = []
         biases_trans = []
 
         check_input_train = None
         check_output_train = None
 
-        for ind_neurons in range(2, len(list_neurons)+1):
+        for ind_neurons in range(2, len(list_neurons) + 1):
 
             """
                 ENCODER
@@ -60,8 +60,9 @@ class SoftmaxAutoEncoder:
 
             for i in range(1, len(list_trained_neurons)):
 
-                if i == ind_neurons-1:
-                    weight = init_weights(list_trained_neurons[i-1], list_trained_neurons[i], 'weight_%s' % i)
+                if i == ind_neurons - 1:
+                    weight = init_weights(list_trained_neurons[i - 1], list_trained_neurons[i],
+                                          'weight_%s' % i, xavier_range)
                     bias = init_bias(list_trained_neurons[i], 'bias_%s' % i)
 
                     self.weights.append(weight)
@@ -72,8 +73,8 @@ class SoftmaxAutoEncoder:
 
                 else:
                     # use the previous value, we solely trained the added layer
-                    weight = self.weights[i-1]
-                    bias = biases[i-1]
+                    weight = self.weights[i - 1]
+                    bias = biases[i - 1]
 
                 prev_output = T.nnet.sigmoid(T.dot(prev_output, weight) + bias)
                 self.list_prev_output.append(prev_output)
@@ -83,11 +84,10 @@ class SoftmaxAutoEncoder:
             """
 
             buffer_output = prev_output
-            list_back_neurons = []
 
-            for i in range(len(self.weights)-1, -1, -1):
+            for i in range(len(self.weights) - 1, -1, -1):
 
-                if i == ind_neurons-2:
+                if i == ind_neurons - 2:
                     bias_transpose = init_bias(list_trained_neurons[i], 'bias_trans_%s' % i)
                     biases_trans.append(bias_transpose)
                 else:
@@ -96,30 +96,38 @@ class SoftmaxAutoEncoder:
 
                 weight_transpose = self.weights[i].transpose()
 
-                # if i == 0:
-                #     prev_output = T.nnet.relu(T.dot(prev_output, weight_transpose) + bias_transpose)
-                # else:
+                # instanstiate new weight if not shared weight
+                if not shared_weight:
+
+                    if i == ind_neurons - 2:
+                        eval_size = weight_transpose.eval().shape
+                        weight_transpose = init_weights(eval_size[0], eval_size[1], 'weight_transpose_%s' % i,
+                                                        xavier_range)
+                        self.weights_transpose.append(weight_transpose)
+                    else:
+                        weight_transpose = self.weights_transpose[i]
+
                 prev_output = T.nnet.sigmoid(T.dot(prev_output, weight_transpose) + bias_transpose)
 
-                if i == ind_neurons-2:
-                    list_back_neurons.append(prev_output)
+                if i == ind_neurons - 2:
                     check_output_train = prev_output
 
-            # last_output = T.switch(T.gt(prev_output, 0.5), 1, 0)
             cost = - T.mean(T.sum(check_input_train * T.log(check_output_train) +
                                   (1 - check_input_train) * T.log(1 - check_output_train), axis=1))
-            # cost = T.mean(T.nnet.binary_crossentropy(check_output_train, check_input_train))
 
             if use_sparsity:
-                cost += init_sparsity_constraint(list_back_neurons=list_back_neurons,
+                cost += init_sparsity_constraint(list_neurons=self.list_prev_output,
                                                  sparsity_parameter=sparsity_parameter,
                                                  penalty_parameter=penalty_parameter)
 
-            params = [self.weights[ind_neurons-2]] + [biases[ind_neurons-2]] + [biases_trans[ind_neurons-2]]
+            params = [self.weights[ind_neurons - 2]] + [biases[ind_neurons - 2]] + [biases_trans[ind_neurons - 2]]
+
+            if not shared_weight:
+                params += [self.weights_transpose[ind_neurons - 2]]
 
             if not use_momentum:
                 grads = T.grad(cost, params)
-                updates = [(param, param - learning_rate*grad) for param, grad in zip(params, grads)]
+                updates = [(param, param - learning_rate * grad) for param, grad in zip(params, grads)]
             else:
                 updates = sgd_momentum(cost, params, momentum=momentum)
 
@@ -129,8 +137,7 @@ class SoftmaxAutoEncoder:
             train_encoder = theano.function(
                 inputs=[x],
                 updates=updates,
-                outputs=outputs,
-                allow_input_downcast=True
+                outputs=outputs
             )
             self.train_encoder_function.append(train_encoder)
 
@@ -183,6 +190,7 @@ class SoftmaxAutoEncoder:
 
             print "Start training layer %s " % cnt_layer
             current_costs_auto_encoder = []
+            train_x, train_y = shuffle_data(train_x, train_y)
 
             for epoch in range(epochs):
                 # go through training set
@@ -221,6 +229,7 @@ class SoftmaxAutoEncoder:
             # go through trainng set
             costs = []
             results = []
+            train_x, train_y = shuffle_data(train_x, train_y)
 
             for start, end in zip(range(0, len(train_x), batch_size), range(batch_size, len(train_y), batch_size)):
                 output, result, cost = self.train_cross(train_x[start:end], train_y[start:end])
@@ -244,7 +253,9 @@ class SoftmaxAutoEncoder:
         return [weight.get_value() for weight in self.weights]
 
     def get_reconstructed_image(self):
+
         return self.reconstructed_image
 
     def get_hidden_layer_activation(self):
+
         return self.hidden_layer_value
