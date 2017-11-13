@@ -29,6 +29,9 @@ def question3():
     trX = trX.reshape(-1, 1, 28, 28)
     teX = teX.reshape(-1, 1, 28, 28)
 
+    trX, trY = trX[:12000], trY[:12000]
+    teX, teY = teX[:2000], teY[:2000]
+
     """
     Question 3: RPMS Prop
     """
