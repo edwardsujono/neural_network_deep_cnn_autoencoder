@@ -63,6 +63,7 @@ if __name__ == "__main__":
 
     cntr = 1
 
+    print "===== start plotting 1a. ============="
     for list_cost in list_cost_all_layer:
         visualizer.show_plot(list_x_point=range(epochs),
                              list_y_point=list_cost,
@@ -84,6 +85,8 @@ if __name__ == "__main__":
              limit_image=100, size=28, transpose=True)
 
     # b. Plot 100 samples of weights (as images) learned at each layer
+    print "===== end plotting 1a. ============"
+    print "===== start plotting 1b. ============="
 
     list_weights = softmax.get_weights_on_each_layer()
     hidden_layer_activation = softmax.get_hidden_layer_activation()
@@ -170,6 +173,9 @@ if __name__ == "__main__":
         transpose=True
     )
 
+    print "===== end plotting 1b. ============="
+    print "===== start plotting 1c. ============="
+
     # c. For 100 representative test images plot
     # - reconstructed images by the network.
     # - Hidden layer activation
@@ -229,6 +235,8 @@ if __name__ == "__main__":
         )
         hidden_layer_cnt += 1
 
+    print "===== end plotting 1c. ============="
+
     """
         ================================
         QUESTION 2
@@ -277,6 +285,7 @@ if __name__ == "__main__":
     print "Start Question 3 !\n"
     print "===========================\n"
 
+    print "===== start plotting 3a. ============="
     num_feature = len(train_x[0])
     list_hidden_layer = [900, 625, 400]
     epochs = 3
@@ -316,6 +325,9 @@ if __name__ == "__main__":
                              )
         cntr += 1
 
+    print "===== end plotting 3a. ============="
+    print "===== start plotting 3b. ============="
+
     # Compare result from 1.b first layer
 
     list_weights_sparsity_momentum = softmax_momentum_sparsity.get_weights_on_each_layer()
@@ -323,6 +335,7 @@ if __name__ == "__main__":
     hidden_layer_activation_softmax = softmax_momentum_sparsity.get_hidden_layer_activation()
     number_column = 10
     visualizer = DataVisualizationAdjacent()
+
 
     number_layer = 0
     visualizer.show_plot(
@@ -358,6 +371,9 @@ if __name__ == "__main__":
         transpose=True
     )
 
+    print "===== end plotting 3b. ============="
+    print "===== start plotting 3c. ============="
+
     # Compare result from 1.c
 
     # ### Reconstrucred images
@@ -388,6 +404,8 @@ if __name__ == "__main__":
         )
         hidden_layer_cnt += 1
 
+    print "===== end plotting 3c. ============="
+    print "===== start plotting 3.2. ============="
     # #### compare result from 2
 
     epochs = 3
@@ -420,6 +438,4 @@ if __name__ == "__main__":
                          figure_name='../data/test_project_b/3_prediction.png',
                          labels=['normal', 'with sparsity parameter and momentum']
                          )
-
-
-
+    print "===== end plotting 3.2. ============="
