@@ -63,25 +63,25 @@ def question1():
     ind = np.random.randint(low=0, high=2000)
     outputs = cnn.test(teX[ind:ind+1,:])
     graph_visualizer.plot_images(
-        outputs[0], figure_name="../data/Figure1.3.1-ConvLayer1.png", 
+        outputs[0], figure_name="../data/project_a/Figure1.3.1-ConvLayer1.png",
         number_column=5, limit_image=15, size=20,
         show_image=False
     )
-    # graph_visualizer.plot_images(
-    #     outputs[1], figure_name="../data/Figure1.3.3-ConvLayer2.png", 
-    #     number_column=5, limit_image=20, size=6,
-    #     show_image=False
-    # )
     graph_visualizer.plot_images(
-        outputs[2], figure_name="../data/Figure1.3.2-PoolLayer1.png", 
+        outputs[1], figure_name="../data/project_a/Figure1.3.3-ConvLayer2.png", 
+        number_column=5, limit_image=20, size=6,
+        show_image=False
+    )
+    graph_visualizer.plot_images(
+        outputs[2], figure_name="../data/project_a/Figure1.3.2-PoolLayer1.png", 
         number_column=5, limit_image=15, size=10,
         show_image=False
     )
-    # graph_visualizer.plot_images(
-    #     outputs[3], figure_name="../data/Figure1.3.4-PoolLayer2.png", 
-    #     number_column=5, limit_image=20, size=3,
-    #     show_image=False
-    # )
+    graph_visualizer.plot_images(
+        outputs[3], figure_name="../data/project_a/Figure1.3.4-PoolLayer2.png", 
+        number_column=5, limit_image=20, size=3,
+        show_image=False
+    )
 
     print("Finished question 1")
 
