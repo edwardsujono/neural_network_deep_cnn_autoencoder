@@ -28,9 +28,13 @@ To recognize MNIST digits, design a convolutional neural network consisting of
 - An Input layer of 28x28 dimensions
 - A convolution layer 𝐶1 of 15 feature maps and filters of window size 9x9. A max pooling layer 𝑆1 with a pooling window of size 2x2.
 - A convolution layer 𝐶2 of 20 feature maps and filters of window size 5x5. A max pooling layer 𝑆2 with a pooling window of size 2x2.
-- A fully connected layer 𝐹3of size 100.
-- A softmax layer 𝐹4of size 10. Train the network using ReLu activation functions for neurons and mini batch gradient descent learning. Set batch size 128, learning rate 𝛼 = 0.05 and decay parameter 𝛽 = 10−4
-- Plot the training cost and test accuracy with learning epochs. For two representative test patterns, plot the feature maps at the convolution and pooling layers.
+- A fully connected layer 𝐹3 of size 100.
+- A softmax layer 𝐹4 of size 10.
+
+Train the network using ReLu activation functions for neurons and mini batch gradient descent learning. Set batch size 128, learning rate 𝛼 = 0.05 and decay parameter 𝛽 = 10−4
+
+- Plot the training cost and test accuracy with learning epochs.
+- For two representative test patterns, plot the feature maps at the convolution and pooling layers.
 
 ### Part 2
 
